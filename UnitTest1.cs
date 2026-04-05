@@ -5,6 +5,7 @@ using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using OpenQA.Selenium.Interactions;
 using System.Linq;
+using OpenQA.Selenium.BiDi.Network;
 
 namespace selenium_practice;
 
@@ -22,13 +23,17 @@ public class Tests
 //определяем поля класса
 public IWebDriver driver;
 public WebDriverWait wait;
+public string discussionsURL = "https://staff-testing.testkontur.ru/communities/612a7485-7f49-48c9-8fe1-ee49b4435111?tab=discussions&id=66892117-a81f-4b3a-9e64-e09cedc18dc2";
+public string baseURL = "https://staff-testing.testkontur.ru/";
+public string newsURL = "https://staff-testing.testkontur.ru/news";
+public string commentsURL = "https://staff-testing.testkontur.ru/comments";
 
 [SetUp]
 public void Setup() //выполняется перед каждым из тестов
     {
         driver = new ChromeDriver();
         driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromMilliseconds(5000);
-        driver.Navigate().GoToUrl("https://staff-testing.testkontur.ru/");
+        driver.Navigate().GoToUrl(baseURL);
         wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
     }
 
@@ -51,7 +56,7 @@ public void SignIn() //авторизация на сайте
         var button = driver.FindElement(By.Name("button"));
         button.Click();
         //Явное ожидание. Ждем когда url поменяется на ожидаемый
-        wait.Until(ExpectedConditions.UrlToBe("https://staff-testing.testkontur.ru/news"));
+        wait.Until(ExpectedConditions.UrlToBe(newsURL));
     }
 
 [Test]
@@ -59,8 +64,18 @@ public void AuthorizationTest() //тестирование авторизаци�
     {     
         SignIn();
 
-        Assert.That(driver.Url, Is.EqualTo("https://staff-testing.testkontur.ru/news"), 
-        "Адрес в поисковой строке не поменялся на https://staff-testing.testkontur.ru/news - авторизация не прошла");
+        Assert.That(driver.Url, Is.EqualTo(newsURL), 
+        $"Адрес в поисковой строке не поменялся на '{newsURL}' - авторизация не прошла");
+    }
+
+public void CreateNewComment(string message)
+    {
+        driver.Navigate().GoToUrl(discussionsURL);
+        var addCommentButton = driver.FindElement(By.CssSelector("[data-tid='AddComment']"));
+        addCommentButton.Click();
+        var commentInput = driver.FindElement(By.CssSelector("[placeholder='Комментировать...']"));
+        //var commentsText = "autotest comment by Danil";
+        commentInput.SendKeys(message);
     }
 
 [Test]
@@ -78,7 +93,7 @@ public void NavigateToCommentTest() //тестирование открытия 
         var sidebar = driver.FindElement(By.CssSelector("[data-tid='SidePageBody']"));   
         var comments = sidebar.FindElement(By.CssSelector("[data-tid='Comments']"));
         comments.Click();
-        wait.Until(ExpectedConditions.UrlToBe("https://staff-testing.testkontur.ru/comments"));
+        wait.Until(ExpectedConditions.UrlToBe(commentsURL));
         var pageTitle = driver.FindElement(By.CssSelector("[data-tid='Title']"));
 
         Assert.That(pageTitle.Text, Does.Contain("Комментарии"), 
@@ -102,13 +117,9 @@ public void SearchTest() //тестирование поисковой стро�
 public void SendCommentTest() //тестирование отправки комментария в обсуждении "Для домашки DevTools"
     {
         SignIn();
-        driver.Navigate().GoToUrl("https://staff-testing.testkontur.ru/communities/612a7485-7f49-48c9-8fe1-ee49b4435111?tab=discussions&id=66892117-a81f-4b3a-9e64-e09cedc18dc2");
-        var addCommentButton = driver.FindElement(By.CssSelector("[data-tid='AddComment']"));
-        addCommentButton.Click();
-        var commentInput = driver.FindElement(By.CssSelector("[placeholder='Комментировать...']"));
-        var commentsText = "autotest comment by Danil";
-        commentInput.SendKeys(commentsText);
-        
+        var commentsText = "autotest text by Danil Totoev";
+        CreateNewComment(commentsText);
+
         //используем табуляцию для смещения фокуса на кнопку для отправки
         new Actions(driver).SendKeys(Keys.Tab).SendKeys(Keys.Enter).Perform(); 
         var commentsList = driver.FindElement(By.CssSelector("[data-tid='CommentsList']"));
@@ -116,7 +127,7 @@ public void SendCommentTest() //тестирование отправки ком
         var myComment = comments.Last();
 
         Assert.That(myComment.Text, Does.Contain(commentsText),
-    $"Вместо введенного текста: '{commentsText}'. Отображается: '{myComment}'");
+    $"Вместо введенного текста: '{commentsText}'. Отображается: '{myComment.Text}'");
         Thread.Sleep(5000);
     }
 }
