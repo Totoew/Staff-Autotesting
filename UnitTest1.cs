@@ -3,6 +3,9 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
+using OpenQA.Selenium.Interactions;
+using System.Linq;
+
 namespace selenium_practice;
 
 
@@ -93,5 +96,27 @@ public void SearchTest() //тестирование поисковой стро�
         searchInput.SendKeys("Тотоев Данил Алексеевич");
 
         Assert.That(searchInput.GetDomAttribute("value").Contains("Тотоев Данил Алексеевич"), "Поле поиска должно содержать введеный текст");
+    }
+
+[Test]
+public void SendCommentTest() //тестирование отправки комментария в обсуждении "Для домашки DevTools"
+    {
+        SignIn();
+        driver.Navigate().GoToUrl("https://staff-testing.testkontur.ru/communities/612a7485-7f49-48c9-8fe1-ee49b4435111?tab=discussions&id=66892117-a81f-4b3a-9e64-e09cedc18dc2");
+        var addCommentButton = driver.FindElement(By.CssSelector("[data-tid='AddComment']"));
+        addCommentButton.Click();
+        var commentInput = driver.FindElement(By.CssSelector("[placeholder='Комментировать...']"));
+        var commentsText = "autotest comment by Danil";
+        commentInput.SendKeys(commentsText);
+        
+        //используем табуляцию для смещения фокуса на кнопку для отправки
+        new Actions(driver).SendKeys(Keys.Tab).SendKeys(Keys.Enter).Perform(); 
+        var commentsList = driver.FindElement(By.CssSelector("[data-tid='CommentsList']"));
+        var comments = commentsList.FindElements(By.CssSelector("[data-tid='TextComment']"));
+        var myComment = comments.Last();
+
+        Assert.That(myComment.Text, Does.Contain(commentsText),
+    $"Вместо введенного текста: '{commentsText}'. Отображается: '{myComment}'");
+        Thread.Sleep(5000);
     }
 }
