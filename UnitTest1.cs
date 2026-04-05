@@ -1,11 +1,8 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using OpenQA.Selenium.Interactions;
-using System.Linq;
-using OpenQA.Selenium.BiDi.Network;
 
 namespace selenium_practice;
 
