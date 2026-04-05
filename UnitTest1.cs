@@ -42,6 +42,7 @@ public void Teardown() //выполняется после завешения к
     {
         driver.Quit();
         driver.Dispose();
+        Thread.Sleep(3000); //разделение тестов небольшим промежутком времени
     }
 
 public void SignIn() //авторизация на сайте
@@ -59,7 +60,7 @@ public void SignIn() //авторизация на сайте
         wait.Until(ExpectedConditions.UrlToBe(newsURL));
     }
 
-public void CreateNewComment(string message)
+public void CreateNewComment(string message) //создание комментария в обсуждении
     {
         driver.Navigate().GoToUrl(discussionsURL);
         var addCommentButton = driver.FindElement(By.CssSelector("[data-tid='AddComment']"));
@@ -70,6 +71,15 @@ public void CreateNewComment(string message)
         //используем табуляцию для смещения фокуса на кнопку для отправки
         new Actions(driver).SendKeys(Keys.Tab).SendKeys(Keys.Enter).Perform(); 
     }
+
+private void PressTabAndEnter(int tabsCount) //множественное нажатие табов + нажатие Enter
+{
+    for (int i = 0; i < tabsCount; i++)
+    {
+        driver.SwitchTo().ActiveElement().SendKeys(Keys.Tab);
+    }
+    driver.SwitchTo().ActiveElement().SendKeys(Keys.Enter);
+}
 
 [Test]
 public void AuthorizationTest() //тестирование авторизации
@@ -127,12 +137,12 @@ public void SendCommentTest() //тестирование отправки ком
 
         Assert.That(myComment.Text, Does.Contain(commentsText),
     $"Вместо введенного текста: '{commentsText}'. Отображается: '{myComment.Text}'");
-        Thread.Sleep(5000);
     }
 
 [Test]
-public void CloseModalWindowForEditComment() //тестирование закрытия окна редактирования коммента по кнопке "Отменить"
+public void CloseModalWindowForEditCommentTest() //тестирование закрытия окна редактирования коммента по кнопке "Отменить"
     {
+        var tabCount = 3;
         SignIn();
         var commentsText = "autotest text by Danil Totoev (for editing)";
         CreateNewComment(commentsText);
@@ -148,10 +158,7 @@ public void CloseModalWindowForEditComment() //тестирование закр
         var editInput = driver.FindElement(By.CssSelector("[data-tid='ModalPageBody'] [data-tid='CommentInput'] textarea"));
         editInput.Click();
 
-        driver.SwitchTo().ActiveElement().SendKeys(Keys.Tab);
-        driver.SwitchTo().ActiveElement().SendKeys(Keys.Tab);
-        driver.SwitchTo().ActiveElement().SendKeys(Keys.Tab);
-        driver.SwitchTo().ActiveElement().SendKeys(Keys.Enter);
+        PressTabAndEnter(tabCount);
 
         //ждём, что модалка закрылась
         wait.Until(d => d.FindElements(By.CssSelector("[data-tid='ModalPageBody']")).Count == 0);
