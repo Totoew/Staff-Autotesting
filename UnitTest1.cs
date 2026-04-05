@@ -55,13 +55,30 @@ public void SignIn() //авторизация на сайте
 public void Authorization_test() //тестирование авторизации
     {     
         SignIn();
+
         Assert.That(driver.Url, Is.EqualTo("https://staff-testing.testkontur.ru/news"), 
         "Адрес в поисковой строке не поменялся на https://staff-testing.testkontur.ru/news - авторизация не прошла");
     }
 
 [Test]
-public void Test_2()
+public void NavigateToComments_test() //тестирование открытия раздела "Комментарии"
     {
-        Assert.Pass();
+        SignIn();
+        wait.Until(ExpectedConditions.TitleIs("Новости"));
+        var burgerButton = driver.FindElement(By.CssSelector("[data-tid='SidebarMenuButton']"));
+        burgerButton.Click();
+        wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("[data-tid='SidePage__container']")));
+
+        //очень тонкий момент. SidePage__container - это панель которая открывается по нажатии на бургер
+        //SidePageBody - это контйнер, в котором лежат все разделы меню. Именно тут нам нужно
+        //искать наш "Раздел" Комментарии
+        var sidebar = driver.FindElement(By.CssSelector("[data-tid='SidePageBody']"));   
+        var comments = sidebar.FindElement(By.CssSelector("[data-tid='Comments']"));
+        comments.Click();
+        wait.Until(ExpectedConditions.UrlToBe("https://staff-testing.testkontur.ru/comments"));
+        var pageTitle = driver.FindElement(By.CssSelector("[data-tid='Title']"));
+
+        Assert.That(pageTitle.Text, Does.Contain("Комментарии"), 
+        "Заголовок раздела не 'Комментарии' - переход на страницу не удался");
     }
 }
